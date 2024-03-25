@@ -126,7 +126,7 @@ class ChatGPTAgent(RespondAgent[ChatGPTAgentConfig]):
             text = self.first_response
         else:
             chat_parameters = self.get_chat_parameters()
-            logging.info(f"Calling from within respond: {chat_parameters}")
+            logging.debug(f"Calling from within respond: {chat_parameters}")
             chat_completion = await openai.ChatCompletion.acreate(**chat_parameters)
             text = chat_completion.choices[0].message.content
         self.logger.debug(f"LLM response: {text}")
@@ -173,7 +173,7 @@ class ChatGPTAgent(RespondAgent[ChatGPTAgentConfig]):
         else:
             chat_parameters = self.get_chat_parameters()
         chat_parameters["stream"] = True
-        logging.info(f"Calling from within async generate_response: {chat_parameters}")
+        logging.debug(f"Calling from within async generate_response: {chat_parameters}")
         stream = await openai.ChatCompletion.acreate(**chat_parameters)
         async for message in collate_response_async(
             openai_get_tokens(stream), get_functions=True
