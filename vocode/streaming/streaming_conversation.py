@@ -71,6 +71,11 @@ from vocode.streaming.utils.worker import (
 OutputDeviceType = TypeVar("OutputDeviceType", bound=BaseOutputDevice)
 
 
+logging.basicConfig()
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+
+
 class StreamingConversation(Generic[OutputDeviceType]):
     class QueueingInterruptibleEventFactory(InterruptibleEventFactory):
         def __init__(self, conversation: "StreamingConversation"):
@@ -279,6 +284,8 @@ class StreamingConversation(Generic[OutputDeviceType]):
                 agent_response_message = typing.cast(
                     AgentResponseMessage, agent_response
                 )
+
+                logger.info(f"AGENT RESPONSE: {agent_response}")
 
                 if self.conversation.filler_audio_worker is not None:
                     if (
