@@ -24,6 +24,11 @@ from vocode.streaming.models.transcript import Transcript
 from vocode.streaming.vector_db.factory import VectorDBFactory
 
 
+logging.basicConfig()
+logger_external = logging.getLogger(__name__)
+logger_external.setLevel(logging.DEBUG)
+
+
 class ChatGPTAgent(RespondAgent[ChatGPTAgentConfig]):
     def __init__(
         self,
@@ -36,6 +41,7 @@ class ChatGPTAgent(RespondAgent[ChatGPTAgentConfig]):
         super().__init__(
             agent_config=agent_config, action_factory=action_factory, logger=logger
         )
+        logger_external.info("Initializing GPT Agent")
         if agent_config.azure_params:
             openai.api_type = agent_config.azure_params.api_type
             openai.api_base = getenv("AZURE_OPENAI_API_BASE")
@@ -120,13 +126,14 @@ class ChatGPTAgent(RespondAgent[ChatGPTAgentConfig]):
             cut_off_response = self.get_cut_off_response()
             return cut_off_response, False
         self.logger.debug("LLM responding to human input")
+        logger_external.debug(f"WE ARE INSIDE THE CHAT GPT AGENT")
         if self.is_first_response and self.first_response:
             self.logger.debug("First response is cached")
             self.is_first_response = False
             text = self.first_response
         else:
             chat_parameters = self.get_chat_parameters()
-            logging.debug(f"Calling from within respond: {chat_parameters}")
+            logger_external.debug(f"Calling from within respond: {chat_parameters}")
             chat_completion = await openai.ChatCompletion.acreate(**chat_parameters)
             text = chat_completion.choices[0].message.content
         self.logger.debug(f"LLM response: {text}")
@@ -173,7 +180,7 @@ class ChatGPTAgent(RespondAgent[ChatGPTAgentConfig]):
         else:
             chat_parameters = self.get_chat_parameters()
         chat_parameters["stream"] = True
-        logging.debug(f"Calling from within async generate_response: {chat_parameters}")
+        logger_external.debug(f"Calling from within async generate_response: {chat_parameters}")
         stream = await openai.ChatCompletion.acreate(**chat_parameters)
         async for message in collate_response_async(
             openai_get_tokens(stream), get_functions=True
