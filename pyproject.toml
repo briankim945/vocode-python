@@ -45,6 +45,8 @@ boto3 = "^1.28.28"
 pydantic = "^2.0"
 langchain-community = "^0.0.16"
 
+fuzzysearch = "^0.7.3"
+
 
 
 [tool.poetry.group.lint.dependencies]
