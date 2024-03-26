@@ -178,4 +178,5 @@ class ChatGPTAgent(RespondAgent[ChatGPTAgentConfig]):
         async for message in collate_response_async(
             openai_get_tokens(stream), get_functions=True
         ):
+            logger_external.debug(f"message in async for: {message}")
             yield message, True
