@@ -68,6 +68,8 @@ from vocode.streaming.utils.worker import (
     InterruptibleWorker,
 )
 
+from vocode.utils.whisper_cpp.heuristics import enter_heuristics
+
 OutputDeviceType = TypeVar("OutputDeviceType", bound=BaseOutputDevice)
 
 
