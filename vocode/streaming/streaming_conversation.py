@@ -152,6 +152,14 @@ class StreamingConversation(Generic[OutputDeviceType]):
             )
             self.conversation.is_human_speaking = not transcription.is_final
             if transcription.is_final:
+
+
+                # VoiceResponse test
+                if "press 2" in transcription.message.lower():
+                    voice_response = VoiceResponse()
+                    voice_response.play(digits="2")
+
+
                 # we use getattr here to avoid the dependency cycle between VonageCall and StreamingConversation
                 event = self.interruptible_event_factory.create_interruptible_event(
                     TranscriptionAgentInput(
