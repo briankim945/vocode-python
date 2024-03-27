@@ -9,6 +9,8 @@ import logging
 import time
 import typing
 
+from twilio.twiml.voice_response import VoiceResponse
+
 from vocode.streaming.action.worker import ActionsWorker
 
 from vocode.streaming.agent.bot_sentiment_analyser import (
