@@ -184,7 +184,7 @@ class ChatGPTAgent(RespondAgent[ChatGPTAgentConfig]):
             openai_get_tokens(stream), get_functions=True
         ):
             logger_external.debug(f"message in async for: {message}")
-            new_message = BaseMessage(text="This is an entirely new message that I've been given.")
+            new_message = BaseMessage(text=str("This is an entirely new message that I've been given"))
             logger_external.info(f"Now trying to overwrite with message: {new_message}")
             # yield message, True
             yield new_message, True
