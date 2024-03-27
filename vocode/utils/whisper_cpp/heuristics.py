@@ -3,7 +3,7 @@ import string
 import json
 from fuzzysearch import find_near_matches
 
-from . import utils, mappings
+from . import mappings
 
 
 def check_regex(voice_input, phrase, errors_allowed=4):
@@ -452,12 +452,12 @@ def enter_heuristics(voice_input_punc, input_data, full_prompt_row):
             elif check_regex(voice_input, "options have changed for eligibility and benefits information press one for claims inquiries press two for pharmacy wage at 3 for authorization inquiries press four for care management press five for health education and cultural and linguistic services press six for transportation press seven for all other doctor or provider inquiries", errors_allowed=10):
                 return {"response": "1", "to_say": False}
             elif check_regex(voice_input, "if the id number is not available you may use the members social security number not all plans require members to register by social security number to enter a letter press the star key and follow the instructions", errors_allowed=8):
-                string_to_use = utils.map_alphanumeric_to_keypad_star(
+                string_to_use = map_alphanumeric_to_keypad_star(
                     input_data_dict["member_id"])
                 print(string_to_use)
                 return {"response": string_to_use, "to_say": False}
             elif check_regex(voice_input, "digit plan id number followed by the pound key if the id number is not available you may use the members social security number not all plans require members to register by social security number to better press the star key", errors_allowed=8):
-                string_to_use = utils.map_alphanumeric_to_keypad_star(
+                string_to_use = map_alphanumeric_to_keypad_star(
                     input_data_dict["member_id"])
                 print(string_to_use)
                 return {"response": string_to_use, "to_say": False}
@@ -1053,7 +1053,7 @@ def enter_heuristics(voice_input_punc, input_data, full_prompt_row):
             elif check_regex(voice_input, "press one for claim status press two if you have questions on a virtual credit card payment press three thousand address information press four for all other questions", errors_allowed=10):
                 return {"response": "1", "to_say": False}
             elif check_regex(voice_input, "please enter the 12 digit alphanumeric policy number please include any preceding zeros"):
-                member_id_to_use = utils.map_alphanumeric_to_keypad(
+                member_id_to_use = map_alphanumeric_to_keypad(
                     input_data_dict["member_id"])
                 return {"response": member_id_to_use, "to_say": False}
             elif check_regex(voice_input, "please enter the insurance date of birth using two digits for the month two digits for the day and four digits for the year"):
@@ -1143,6 +1143,21 @@ def general_heuristics(voice_input, input_data_dict):
         if check_regex(voice_input, phrase[0], errors_allowed=phrase[1]):
             return {"response": "", "to_say": True}
     return {}
+
+
+def map_alphanumeric_to_keypad(string_to_use):
+    cleaned_string = string_to_use.replace('.', '').replace(' ', '')
+    numbers = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
+    letters = list(string.ascii_uppercase)
+    new_string = ''
+    for character in cleaned_string:
+        if character in numbers:
+            new_string += character
+        elif character in letters:
+            new_string += mappings.KEYPAD_MAPPING[character]
+        else:
+            print("ERROR: Character not found")
+    return new_string
 
 
 def valley_health_plan_eligibility_heuristics_18884218444(
