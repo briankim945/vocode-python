@@ -187,4 +187,4 @@ class ChatGPTAgent(RespondAgent[ChatGPTAgentConfig]):
             new_message = BaseMessage(text=str("This is an entirely new message that I've been given"))
             logger_external.info(f"Now trying to overwrite with message: {new_message}")
             # yield message, True
-            yield new_message, True
+            yield new_message.text, True
