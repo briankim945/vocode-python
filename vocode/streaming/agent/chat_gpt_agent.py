@@ -23,6 +23,10 @@ from vocode.streaming.models.events import Sender
 from vocode.streaming.models.transcript import Transcript
 from vocode.streaming.vector_db.factory import VectorDBFactory
 
+logging.basicConfig()
+logger_external = logging.getLogger(__name__)
+logger_external.setLevel(logging.DEBUG)
+
 
 class ChatGPTAgent(RespondAgent[ChatGPTAgentConfig]):
     def __init__(
