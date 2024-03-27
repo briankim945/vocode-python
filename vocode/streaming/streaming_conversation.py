@@ -156,6 +156,7 @@ class StreamingConversation(Generic[OutputDeviceType]):
 
                 # VoiceResponse test
                 if "press 2" in transcription.message.lower():
+                    logger.info("Pressing 2")
                     voice_response = VoiceResponse()
                     voice_response.play(digits="2")
 
