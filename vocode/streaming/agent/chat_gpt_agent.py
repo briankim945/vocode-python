@@ -13,6 +13,7 @@ from vocode.streaming.action.factory import ActionFactory
 from vocode.streaming.agent.base_agent import RespondAgent
 from vocode.streaming.models.actions import FunctionCall, FunctionFragment
 from vocode.streaming.models.agent import ChatGPTAgentConfig
+from vocode.streaming.models.message import BaseMessage
 from vocode.streaming.agent.utils import (
     format_openai_chat_messages_from_transcript,
     collate_response_async,
@@ -183,4 +184,7 @@ class ChatGPTAgent(RespondAgent[ChatGPTAgentConfig]):
             openai_get_tokens(stream), get_functions=True
         ):
             logger_external.debug(f"message in async for: {message}")
-            yield message, True
+            new_message = BaseMessage(text="This is an entirely new message that I've been given.")
+            logger_external.info(f"Now trying to overwrite with message: {new_message}")
+            # yield message, True
+            yield new_message, True
