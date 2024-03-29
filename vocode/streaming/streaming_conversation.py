@@ -8,6 +8,7 @@ from typing import Any, Awaitable, Callable, Generic, Optional, Tuple, TypeVar, 
 import logging
 import time
 import typing
+import re
 
 from twilio.twiml.voice_response import VoiceResponse
 
@@ -636,6 +637,14 @@ class StreamingConversation(Generic[OutputDeviceType]):
             self.transcriber.mute()
         message_sent = message
         cut_off = False
+
+        regex_validate = re.compile(r'DTMF DIGITS:(\d+)')
+        if regex_validate.fullmatch(message_sent):
+            logger.info(f"Successfully found: {message_sent}")
+            m = regex_validate.match(message_sent)
+            for d in m.group(1):
+                logger.info(f"Need to handle digit {d}")
+
         chunk_size = seconds_per_chunk * get_chunk_size_per_second(
             self.synthesizer.get_synthesizer_config().audio_encoding,
             self.synthesizer.get_synthesizer_config().sampling_rate,
