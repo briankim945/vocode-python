@@ -179,6 +179,7 @@ class ChatGPTAgent(RespondAgent[ChatGPTAgentConfig]):
             chat_parameters = self.get_chat_parameters()
         chat_parameters["stream"] = True
         logger_external.info(f"Calling from within async generate_response: {chat_parameters}")
+        logger_external.info(f"Last message before creating token: {chat_parameters['messages'][-1]}")
         stream = await openai.ChatCompletion.acreate(**chat_parameters)
         async for message in collate_response_async(
             openai_get_tokens(stream), get_functions=True
