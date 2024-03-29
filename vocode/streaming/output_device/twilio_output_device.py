@@ -32,7 +32,7 @@ class TwilioOutputDevice(BaseOutputDevice):
             message = await self.queue.get()
             await self.ws.send_text(message)
 
-    def consume_dtmf_message(self, digit, sequence_number):
+    def consume_dtmf_message(self, digit: str, sequence_number: str):
         twilio_message = { 
             "event": "dtmf", 
             "streamSid": self.stream_sid, 

@@ -633,57 +633,71 @@ class StreamingConversation(Generic[OutputDeviceType]):
         message_sent = message
         cut_off = False
 
+        # HANDLING DTMF TONES
         regex_validate = re.compile(r'DTMF DIGITS:(\d+)')
         if regex_validate.fullmatch(message_sent):
             logger.info(f"Successfully found: {message_sent}")
             m = regex_validate.match(message_sent)
-            for d in m.group(1):
+            for i, d in enumerate(m.group(1)):
                 logger.info(f"Need to handle digit {d}")
-
-        chunk_size = seconds_per_chunk * get_chunk_size_per_second(
-            self.synthesizer.get_synthesizer_config().audio_encoding,
-            self.synthesizer.get_synthesizer_config().sampling_rate,
-        )
-        chunk_idx = 0
-        seconds_spoken = 0
-        async for chunk_result in synthesis_result.chunk_generator:
-            start_time = time.time()
-            speech_length_seconds = seconds_per_chunk * (
-                len(chunk_result.chunk) / chunk_size
+                if stop_event.is_set():
+                    self.logger.debug(
+                        "Interrupted, stopping text to speech after {} chunks".format(
+                            chunk_idx
+                        )
+                    )
+                    message_sent = f"DTMF DIGITS:{m.group(1)[:i + 1]}-"
+                    cut_off = True
+                    break
+                self.output_device.consume_dtmf_message(str(d), str(i + 1))
+                await asyncio.sleep(1)
+                if transcript_message:
+                    transcript_message.text = f"DTMF DIGITS:{m.group(1)[:i + 1]}"
+        else:
+            chunk_size = seconds_per_chunk * get_chunk_size_per_second(
+                self.synthesizer.get_synthesizer_config().audio_encoding,
+                self.synthesizer.get_synthesizer_config().sampling_rate,
             )
-            seconds_spoken = chunk_idx * seconds_per_chunk
-            if stop_event.is_set():
-                self.logger.debug(
-                    "Interrupted, stopping text to speech after {} chunks".format(
-                        chunk_idx
+            chunk_idx = 0
+            seconds_spoken = 0
+            async for chunk_result in synthesis_result.chunk_generator:
+                start_time = time.time()
+                speech_length_seconds = seconds_per_chunk * (
+                    len(chunk_result.chunk) / chunk_size
+                )
+                seconds_spoken = chunk_idx * seconds_per_chunk
+                if stop_event.is_set():
+                    self.logger.debug(
+                        "Interrupted, stopping text to speech after {} chunks".format(
+                            chunk_idx
+                        )
+                    )
+                    message_sent = f"{synthesis_result.get_message_up_to(seconds_spoken)}-"
+                    cut_off = True
+                    break
+                if chunk_idx == 0:
+                    if started_event:
+                        started_event.set()
+                self.output_device.consume_nonblocking(chunk_result.chunk)
+                end_time = time.time()
+                await asyncio.sleep(
+                    max(
+                        speech_length_seconds
+                        - (end_time - start_time)
+                        - self.per_chunk_allowance_seconds,
+                        0,
                     )
                 )
-                message_sent = f"{synthesis_result.get_message_up_to(seconds_spoken)}-"
-                cut_off = True
-                break
-            if chunk_idx == 0:
-                if started_event:
-                    started_event.set()
-            self.output_device.consume_nonblocking(chunk_result.chunk)
-            end_time = time.time()
-            await asyncio.sleep(
-                max(
-                    speech_length_seconds
-                    - (end_time - start_time)
-                    - self.per_chunk_allowance_seconds,
-                    0,
+                self.logger.debug(
+                    "Sent chunk {} with size {}".format(chunk_idx, len(chunk_result.chunk))
                 )
-            )
-            self.logger.debug(
-                "Sent chunk {} with size {}".format(chunk_idx, len(chunk_result.chunk))
-            )
-            self.mark_last_action_timestamp()
-            chunk_idx += 1
-            seconds_spoken += seconds_per_chunk
-            if transcript_message:
-                transcript_message.text = synthesis_result.get_message_up_to(
-                    seconds_spoken
-                )
+                self.mark_last_action_timestamp()
+                chunk_idx += 1
+                seconds_spoken += seconds_per_chunk
+                if transcript_message:
+                    transcript_message.text = synthesis_result.get_message_up_to(
+                        seconds_spoken
+                    )
         if self.transcriber.get_transcriber_config().mute_during_speech:
             self.logger.debug("Unmuting transcriber")
             self.transcriber.unmute()
