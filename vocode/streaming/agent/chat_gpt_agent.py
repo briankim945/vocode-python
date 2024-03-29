@@ -179,13 +179,18 @@ class ChatGPTAgent(RespondAgent[ChatGPTAgentConfig]):
             chat_parameters = self.get_chat_parameters()
         chat_parameters["stream"] = True
         logger_external.info(f"Calling from within async generate_response: {chat_parameters}")
-        logger_external.info(f"Last message before creating token: {chat_parameters['messages'][-1]}")
-        stream = await openai.ChatCompletion.acreate(**chat_parameters)
-        async for message in collate_response_async(
-            openai_get_tokens(stream), get_functions=True
-        ):
-            logger_external.debug(f"message in async for: {message}")
-            # new_message = BaseMessage(text=str("This is an entirely new message that I've been given"))
-            # logger_external.info(f"Now trying to overwrite with message: {new_message}")
-            yield message, True
-            # yield new_message.text, True
+        last_user_input = chat_parameters['messages'][-1]['content']
+        logger_external.info(f"Last message before creating token: {last_user_input}")
+        if 'press one' in last_user_input.lower() or 'press 1' in last_user_input.lower():
+            logger_external.info("Yielding DIGITS INSTEAD OF NEW MESSAGE")
+            yield "DTMF DIGITS:1", True
+        else:
+            stream = await openai.ChatCompletion.acreate(**chat_parameters)
+            async for message in collate_response_async(
+                openai_get_tokens(stream), get_functions=True
+            ):
+                logger_external.debug(f"message in async for: {message}")
+                # new_message = BaseMessage(text=str("This is an entirely new message that I've been given"))
+                # logger_external.info(f"Now trying to overwrite with message: {new_message}")
+                yield message, True
+                # yield new_message.text, True
