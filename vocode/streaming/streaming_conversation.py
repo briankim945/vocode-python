@@ -155,11 +155,6 @@ class StreamingConversation(Generic[OutputDeviceType]):
             if transcription.is_final:
 
 
-                # VoiceResponse test
-                if "press 2" in transcription.message.lower() or "press two" in transcription.message.lower():
-                    logger.info("Pressing 2")
-                    voice_response = VoiceResponse()
-                    voice_response.play(digits="2")
 
 
                 # we use getattr here to avoid the dependency cycle between VonageCall and StreamingConversation
