@@ -32,6 +32,18 @@ class TwilioOutputDevice(BaseOutputDevice):
             message = await self.queue.get()
             await self.ws.send_text(message)
 
+    def consume_dtmf_message(self, digit, sequence_number):
+        twilio_message = { 
+            "event": "dtmf", 
+            "streamSid": self.stream_sid, 
+            "sequenceNumber": sequence_number, 
+            "dtmf": { 
+                "track":"inbound_track", 
+                "digit": digit
+            }
+        }
+        self.queue.put_nowait(json.dumps(twilio_message))
+
     def consume_nonblocking(self, chunk: bytes):
         twilio_message = {
             "event": "media",
