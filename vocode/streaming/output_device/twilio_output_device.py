@@ -42,6 +42,7 @@ class TwilioOutputDevice(BaseOutputDevice):
         while self.active:
             message = await self.queue.get()
             logger.info(f"From within twilio_output_device process, message: {message}")
+            logger.info(f'{"event" in message} and {message["event"] == "dtmf"}')
             try:
                 if "event" in message and message["event"] == "dtmf":
                     xml = self.templater.update_twiml_connection_with_digits_to_string(
@@ -51,7 +52,7 @@ class TwilioOutputDevice(BaseOutputDevice):
                     )
                     logger.info(f"XML: {xml}")
             except Exception as e:
-                logger.error(f"Unable to get XML: {xml}")
+                logger.error(f"Unable to get XML: {e}")
             await self.ws.send_text(message)
 
     def consume_dtmf_message(self, digit: str, sequence_number: str):
