@@ -13,7 +13,7 @@ from vocode.streaming.telephony.constants import (
     DEFAULT_AUDIO_ENCODING,
     DEFAULT_SAMPLING_RATE,
 )
-from ...streaming.telephony.templater import update_twiml_connection_with_digits_to_string
+from vocode.streaming.telephony.templater import Templater
 
 
 logging.basicConfig()
@@ -36,6 +36,7 @@ class TwilioOutputDevice(BaseOutputDevice):
         self.handle_digits = handle_digits
         self.conversation_id = None
         self.base_url = None
+        self.templater = Templater()
 
     async def process(self):
         while self.active:
@@ -43,7 +44,7 @@ class TwilioOutputDevice(BaseOutputDevice):
             logger.info(f"From within twilio_output_device process, message: {message}")
             try:
                 if "event" in message and message["event"] == "dtmf":
-                    xml = update_twiml_connection_with_digits_to_string(
+                    xml = self.templater.update_twiml_connection_with_digits_to_string(
                         call_id=self.conversation_id,
                         base_url=self.base_url,
                         digits="1"
