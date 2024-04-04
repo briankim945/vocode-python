@@ -4,6 +4,7 @@ import asyncio
 import json
 import base64
 from typing import Optional
+import logging
 
 from fastapi import WebSocket
 
@@ -12,6 +13,9 @@ from vocode.streaming.telephony.constants import (
     DEFAULT_AUDIO_ENCODING,
     DEFAULT_SAMPLING_RATE,
 )
+logging.basicConfig()
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
 
 
 class TwilioOutputDevice(BaseOutputDevice):
@@ -30,6 +34,7 @@ class TwilioOutputDevice(BaseOutputDevice):
     async def process(self):
         while self.active:
             message = await self.queue.get()
+            logger.info(f"From within twilio_output_device process, message: {message}")
             await self.ws.send_text(message)
 
     def consume_dtmf_message(self, digit: str, sequence_number: str):
