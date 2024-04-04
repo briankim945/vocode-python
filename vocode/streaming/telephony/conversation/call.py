@@ -73,6 +73,8 @@ class Call(StreamingConversation[TelephonyOutputDeviceType]):
     def attach_ws(self, ws: WebSocket):
         self.logger.debug("Trying to attach WS to outbound call")
         self.output_device.ws = ws
+        self.output_device.conversation_id = self.id
+        self.output_device.base_url = self.base_url
         self.logger.debug("Attached WS to outbound call")
 
     async def attach_ws_and_start(self, ws: WebSocket):
