@@ -13,7 +13,7 @@ from vocode.streaming.telephony.constants import (
     DEFAULT_AUDIO_ENCODING,
     DEFAULT_SAMPLING_RATE,
 )
-from vocode.streaming.telephony.templater import update_twiml_connection_with_digits_to_string
+from ...streaming.telephony.templater import update_twiml_connection_with_digits_to_string
 
 
 logging.basicConfig()
