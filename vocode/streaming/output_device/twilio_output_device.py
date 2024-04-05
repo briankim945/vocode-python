@@ -41,7 +41,7 @@ class TwilioOutputDevice(BaseOutputDevice):
     async def process(self):
         while self.active:
             message = await self.queue.get()
-            logger.info(f"From within twilio_output_device process, message: {message}")
+            logger.info(f"V2: From within twilio_output_device process, message: {message}")
             logger.info(f'{"event" in message} and {message["event"] == "dtmf"}')
             try:
                 if "event" in message and message["event"] == "dtmf":
