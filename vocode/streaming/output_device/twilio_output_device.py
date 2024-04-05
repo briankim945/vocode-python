@@ -41,8 +41,8 @@ class TwilioOutputDevice(BaseOutputDevice):
     async def process(self):
         while self.active:
             message = await self.queue.get()
-            logger.debug(f"V2: From within twilio_output_device process, message: {message}")
-            logger.debug(f"{'event' in message} and {message['event'] == 'dtmf'}")
+            # logger.debug(f"V2: From within twilio_output_device process, message: {message}")
+            # logger.debug(f"{'event' in message} and {message['event'] == 'dtmf'}")
             logger.debug("Something's rotten in the state of denmark")
             try:
                 if "event" in message and message["event"] == "dtmf":
