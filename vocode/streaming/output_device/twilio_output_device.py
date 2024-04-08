@@ -55,7 +55,7 @@ class TwilioOutputDevice(BaseOutputDevice):
                         digits="1"
                     )
                     logger.debug(f"XML: {xml}")
-                    call = self.twilio_client.calls(self.conversation_id).update(twiml=xml)
+                    call = self.twilio_client.get_call(self.conversation_id).update(twiml=xml)
                 else:
                     logger.debug(f"V2: From within twilio_output_device process, message: {message}")
                     await self.ws.send_text(json.dumps(message))
