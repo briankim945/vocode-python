@@ -34,7 +34,8 @@ class TwilioOutputDevice(BaseOutputDevice):
         self.queue: asyncio.Queue[str] = asyncio.Queue()
         self.process_task = asyncio.create_task(self.process())
         self.handle_digits = handle_digits
-        self.conversation_id = None
+        self.current_conversation_id = None
+        self.current_call_id = None
         self.base_url = None
         self.templater = Templater()
 
@@ -48,14 +49,14 @@ class TwilioOutputDevice(BaseOutputDevice):
             # logger.debug(f"{'event' in message} and {message['event'] == 'dtmf'}")
             # logger.debug("Something's rotten in the state of denmark")
             try:
-                if self.twilio_client is not None and "event" in message and message["event"] == "dtmf":
+                if self.twilio_client is not None and self.current_call_id is not None and "event" in message and message["event"] == "dtmf":
                     xml = self.templater.update_twiml_connection_with_digits_to_string(
-                        call_id=self.conversation_id,
+                        call_id=self.current_conversation_id,
                         base_url=self.base_url,
                         digits="1"
                     )
                     logger.debug(f"XML: {xml}")
-                    call = self.twilio_client.get_call(self.conversation_id).update(twiml=xml)
+                    call = self.twilio_client.get_call(self.current_call_id).update(twiml=xml)
                 else:
                     logger.debug(f"V2: From within twilio_output_device process, message: {message}")
                     await self.ws.send_text(json.dumps(message))
