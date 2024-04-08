@@ -51,7 +51,12 @@ class TwilioOutputDevice(BaseOutputDevice):
             # logger.debug("Something's rotten in the state of denmark")
             try:
                 if self.twilio_client is not None and self.current_call_id is not None and self.current_conversation_id is not None and "event" in message and message["event"] == "dtmf":
-                    xml = self.templater.update_twiml_connection_with_digits_to_string(
+                    # xml = self.templater.update_twiml_connection_with_digits_to_string(
+                    #     call_id=self.current_conversation_id,
+                    #     base_url=self.base_url,
+                    #     digits="1"
+                    # )
+                    xml = self.templater.update_twiml_connection_with_digits_and_redirect_to_string(
                         call_id=self.current_conversation_id,
                         base_url=self.base_url,
                         digits="1"
