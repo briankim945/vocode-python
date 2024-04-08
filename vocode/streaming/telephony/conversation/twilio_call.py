@@ -80,6 +80,8 @@ class TwilioCall(Call[TwilioOutputDevice]):
         self.twilio_sid = twilio_sid
         self.latest_media_timestamp = 0
 
+        self.output_device.twilio_client = self.telephony_client
+
     def create_state_manager(self) -> TwilioCallStateManager:
         return TwilioCallStateManager(self)
 
