@@ -38,6 +38,8 @@ class TwilioOutputDevice(BaseOutputDevice):
         self.base_url = None
         self.templater = Templater()
 
+        self.twilio_client = None
+
     async def process(self):
         while self.active:
             message = await self.queue.get()
@@ -46,13 +48,14 @@ class TwilioOutputDevice(BaseOutputDevice):
             # logger.debug(f"{'event' in message} and {message['event'] == 'dtmf'}")
             # logger.debug("Something's rotten in the state of denmark")
             try:
-                if "event" in message and message["event"] == "dtmf":
+                if self.twilio_client is not None and "event" in message and message["event"] == "dtmf":
                     xml = self.templater.update_twiml_connection_with_digits_to_string(
                         call_id=self.conversation_id,
                         base_url=self.base_url,
                         digits="1"
                     )
                     logger.debug(f"XML: {xml}")
+                    call = self.twilio_client.calls(self.conversation_id).update(twiml=xml)
                 else:
                     logger.debug(f"V2: From within twilio_output_device process, message: {message}")
             except Exception:
