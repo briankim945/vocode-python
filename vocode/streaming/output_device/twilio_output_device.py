@@ -40,6 +40,7 @@ class TwilioOutputDevice(BaseOutputDevice):
         self.templater = Templater()
 
         self.twilio_client = None
+        self.heuristic_func = None
 
     async def process(self):
         while self.active:

@@ -23,6 +23,7 @@ from vocode.streaming.agent.utils import (
 from vocode.streaming.models.events import Sender
 from vocode.streaming.models.transcript import Transcript
 from vocode.streaming.vector_db.factory import VectorDBFactory
+from vocode.utils.whisper_cpp.heuristics import enter_heuristics
 
 logging.basicConfig()
 logger_external = logging.getLogger(__name__)
@@ -64,6 +65,11 @@ class ChatGPTAgent(RespondAgent[ChatGPTAgentConfig]):
             self.vector_db = vector_db_factory.create_vector_db(
                 self.agent_config.vector_db_config
             )
+
+        if agent_config.input_data is not None and agent_config.full_prompt_row is not None:
+            self.heuristic_func = lambda voice_input_punc: enter_heuristics(voice_input_punc, agent_config.input_data, agent_config.full_prompt_row)
+        else:
+            self.heuristic_func = lambda _: {}
 
     def get_functions(self):
         assert self.agent_config.actions
