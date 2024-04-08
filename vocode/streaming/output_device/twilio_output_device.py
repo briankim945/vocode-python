@@ -58,9 +58,10 @@ class TwilioOutputDevice(BaseOutputDevice):
                     call = self.twilio_client.calls(self.conversation_id).update(twiml=xml)
                 else:
                     logger.debug(f"V2: From within twilio_output_device process, message: {message}")
+                    await self.ws.send_text(message)
             except Exception:
                 logger.exception("Unable to get XML")
-            await self.ws.send_text(message)
+                await self.ws.send_text(message)
 
     def consume_dtmf_message(self, digit: str, sequence_number: str):
         twilio_message = { 
