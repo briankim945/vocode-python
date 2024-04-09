@@ -129,7 +129,7 @@ class TwilioCall(Call[TwilioOutputDevice]):
                     break
         if not self.output_device.playing_dtmf:
             await self.config_manager.delete_config(self.id)
-            await self.tear_down()
+        await self.tear_down()
 
     async def wait_for_twilio_start(self, ws: WebSocket):
         assert isinstance(self.output_device, TwilioOutputDevice)
