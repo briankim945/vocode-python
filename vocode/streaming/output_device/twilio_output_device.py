@@ -41,6 +41,7 @@ class TwilioOutputDevice(BaseOutputDevice):
 
         self.twilio_client = None
         self.heuristic_func = None
+        self.playing_dtmf = False
 
     async def process(self):
         while self.active:
@@ -56,6 +57,7 @@ class TwilioOutputDevice(BaseOutputDevice):
                     #     base_url=self.base_url,
                     #     digits="1"
                     # )
+                    self.playing_dtmf = True
                     xml = self.templater.update_twiml_connection_with_digits_and_redirect_to_string(
                         call_id=self.current_conversation_id,
                         base_url=self.base_url,

@@ -71,6 +71,8 @@ class ChatGPTAgent(RespondAgent[ChatGPTAgentConfig]):
         else:
             self.heuristic_func = lambda _: {}
 
+        self.update_dtmf_bool = None
+
     def get_functions(self):
         assert self.agent_config.actions
         if not self.action_factory:
