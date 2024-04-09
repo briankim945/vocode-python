@@ -708,12 +708,13 @@ class StreamingConversation(Generic[OutputDeviceType]):
     def mark_terminated(self):
         self.active = False
 
-    async def terminate(self):
+    async def terminate(self, conversation_ended=True):
         self.mark_terminated()
         self.broadcast_interrupt()
-        self.events_manager.publish_event(
-            TranscriptCompleteEvent(conversation_id=self.id, transcript=self.transcript)
-        )
+        if conversation_ended:
+            self.events_manager.publish_event(
+                TranscriptCompleteEvent(conversation_id=self.id, transcript=self.transcript)
+            )
         if self.check_for_idle_task:
             self.logger.debug("Terminating check_for_idle Task")
             self.check_for_idle_task.cancel()
