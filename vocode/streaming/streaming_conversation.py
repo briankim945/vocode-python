@@ -452,6 +452,7 @@ class StreamingConversation(Generic[OutputDeviceType]):
         self.events_task: Optional[asyncio.Task] = None
         self.per_chunk_allowance_seconds = per_chunk_allowance_seconds
         self.transcript = transcript or Transcript()
+        self.logger.info(f"Transcript size: {len(self.transcript.event_logs)}")
         self.transcript.attach_events_manager(self.events_manager)
         self.bot_sentiment = None
         if self.agent.get_agent_config().track_bot_sentiment:

@@ -89,10 +89,12 @@ class Call(StreamingConversation[TelephonyOutputDeviceType]):
     async def tear_down(self):
         conversation_ended = not self.output_device.playing_dtmf
 
+        self.logger.debug(f"Conversation ended: {conversation_ended}")
         if conversation_ended:
             self.events_manager.publish_event(PhoneCallEndedEvent(conversation_id=self.id))
         else:
             self.logger.info("Saving call_config")
+            self.logger.info(f"Transcript: {len(self.transcript.event_logs)}")
             # Save the transcript on the call config before we store it
             self.call_config.transcript = self.transcript
             # But clear out the events_manager because it may not be JSON serializable
