@@ -122,8 +122,9 @@ class TwilioCall(Call[TwilioOutputDevice]):
                 response = await self.handle_ws_message(message)
                 if response == PhoneCallWebsocketAction.CLOSE_WEBSOCKET:
                     break
-        await self.config_manager.delete_config(self.id)
-        await self.tear_down()
+        if not self.output_device.playing_dtmf:
+            await self.config_manager.delete_config(self.id)
+            await self.tear_down()
 
     async def wait_for_twilio_start(self, ws: WebSocket):
         assert isinstance(self.output_device, TwilioOutputDevice)
