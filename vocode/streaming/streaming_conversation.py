@@ -391,6 +391,7 @@ class StreamingConversation(Generic[OutputDeviceType]):
         per_chunk_allowance_seconds: float = PER_CHUNK_ALLOWANCE_SECONDS,
         events_manager: Optional[EventsManager] = None,
         logger: Optional[logging.Logger] = None,
+        transcript: Optional[Transcript] = None,
     ):
         self.id = conversation_id or create_conversation_id()
         self.logger = wrap_logger(
@@ -450,7 +451,7 @@ class StreamingConversation(Generic[OutputDeviceType]):
         self.events_manager = events_manager or EventsManager()
         self.events_task: Optional[asyncio.Task] = None
         self.per_chunk_allowance_seconds = per_chunk_allowance_seconds
-        self.transcript = Transcript()
+        self.transcript = transcript or Transcript()
         self.transcript.attach_events_manager(self.events_manager)
         self.bot_sentiment = None
         if self.agent.get_agent_config().track_bot_sentiment:

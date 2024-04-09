@@ -15,6 +15,9 @@ from vocode.streaming.models.synthesizer import (
 from vocode.streaming.models.transcriber import (
     TranscriberConfig,
 )
+from vocode.streaming.models.telephony import (
+    BaseCallConfig,
+)
 from vocode.streaming.synthesizer.factory import SynthesizerFactory
 from vocode.streaming.telephony.config_manager.base_config_manager import (
     BaseConfigManager,
@@ -38,6 +41,7 @@ class Call(StreamingConversation[TelephonyOutputDeviceType]):
         to_phone: str,
         base_url: str,
         config_manager: BaseConfigManager,
+        call_config: BaseCallConfig,
         output_device: TelephonyOutputDeviceType,
         agent_config: AgentConfig,
         transcriber_config: TranscriberConfig,
@@ -59,6 +63,7 @@ class Call(StreamingConversation[TelephonyOutputDeviceType]):
         self.to_phone = to_phone
         self.base_url = base_url
         self.config_manager = config_manager
+        self.call_config = call_config
         super().__init__(
             output_device,
             transcriber_factory.create_transcriber(transcriber_config, logger=logger),
@@ -68,6 +73,7 @@ class Call(StreamingConversation[TelephonyOutputDeviceType]):
             per_chunk_allowance_seconds=0.01,
             events_manager=events_manager,
             logger=logger,
+            transcript=call_config.transcript
         )
 
     def attach_ws(self, ws: WebSocket):
