@@ -58,7 +58,7 @@ class TwilioOutputDevice(BaseOutputDevice):
                     #     digits="1"
                     # )
                     self.playing_dtmf = True
-                    xml = self.templater.update_twiml_connection_with_digits_and_redirect_to_string(
+                    xml = self.templater.update_twiml_connection_with_digits_to_string(
                         call_id=self.current_conversation_id,
                         base_url=self.base_url,
                         digits="1"
