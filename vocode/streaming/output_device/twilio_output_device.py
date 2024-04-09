@@ -66,7 +66,7 @@ class TwilioOutputDevice(BaseOutputDevice):
                     logger.debug(f"XML: {xml}")
                     call = self.twilio_client.get_call(self.current_call_id).update(twiml=xml)
                 else:
-                    logger.debug(f"V2: From within twilio_output_device process, message: {message}")
+                    # logger.debug(f"V2: From within twilio_output_device process, message: {message}")
                     await self.ws.send_text(json.dumps(message))
             except Exception:
                 logger.exception("Unable to get XML")
