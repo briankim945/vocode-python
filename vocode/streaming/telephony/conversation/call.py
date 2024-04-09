@@ -91,5 +91,12 @@ class Call(StreamingConversation[TelephonyOutputDeviceType]):
 
         if conversation_ended:
             self.events_manager.publish_event(PhoneCallEndedEvent(conversation_id=self.id))
+        else:
+            # Save the transcript on the call config before we store it
+            self.call_config.transcript = self.transcript
+            # But clear out the events_manager because it may not be JSON serializable
+            self.call_config.transcript.events_manager = None
+            # Now store it, so we can continue with the same transcript when we get the next websocket connection
+            self.config_manager.save_config(conversation_id=self.id, config=self.call_config)
 
         await self.terminate(conversation_ended=conversation_ended)
