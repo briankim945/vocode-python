@@ -44,6 +44,7 @@ class TwilioOutputDevice(BaseOutputDevice):
         self.playing_dtmf = False
 
     async def process(self):
+        logger.info(f"Current state of DTMF: {self.playing_dtmf}")
         while self.active:
             message = await self.queue.get()
             message = json.loads(message)
