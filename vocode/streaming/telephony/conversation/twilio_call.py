@@ -18,6 +18,9 @@ from vocode.streaming.models.synthesizer import (
 from vocode.streaming.models.transcriber import (
     TranscriberConfig,
 )
+from vocode.streaming.models.telephony import (
+    BaseCallConfig,
+)
 from vocode.streaming.synthesizer.factory import SynthesizerFactory
 from vocode.streaming.telephony.client.twilio_client import TwilioClient
 from vocode.streaming.telephony.config_manager.base_config_manager import (
@@ -51,12 +54,14 @@ class TwilioCall(Call[TwilioOutputDevice]):
         synthesizer_factory: SynthesizerFactory = SynthesizerFactory(),
         events_manager: Optional[EventsManager] = None,
         logger: Optional[logging.Logger] = None,
+        call_config: Optional[BaseCallConfig] = None
     ):
         super().__init__(
             from_phone,
             to_phone,
             base_url,
             config_manager,
+            call_config,
             TwilioOutputDevice(),
             agent_config,
             transcriber_config,

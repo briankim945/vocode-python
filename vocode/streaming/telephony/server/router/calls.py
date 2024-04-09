@@ -72,6 +72,7 @@ class CallsRouter(BaseRouter):
                 agent_factory=agent_factory,
                 synthesizer_factory=synthesizer_factory,
                 events_manager=events_manager,
+                call_config=call_config,
             )
         elif isinstance(call_config, VonageCallConfig):
             return VonageCall(
