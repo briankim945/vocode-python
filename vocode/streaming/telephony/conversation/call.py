@@ -81,8 +81,6 @@ class Call(StreamingConversation[TelephonyOutputDeviceType]):
         raise NotImplementedError
 
     async def tear_down(self):
-        self.events_manager.publish_event(PhoneCallEndedEvent(conversation_id=self.id))
-        await self.terminate()
         conversation_ended = not self.output_device.playing_dtmf
 
         if conversation_ended:
