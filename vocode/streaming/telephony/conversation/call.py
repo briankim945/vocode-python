@@ -92,6 +92,7 @@ class Call(StreamingConversation[TelephonyOutputDeviceType]):
         if conversation_ended:
             self.events_manager.publish_event(PhoneCallEndedEvent(conversation_id=self.id))
         else:
+            self.logger.info("Saving call_config")
             # Save the transcript on the call config before we store it
             self.call_config.transcript = self.transcript
             # But clear out the events_manager because it may not be JSON serializable
