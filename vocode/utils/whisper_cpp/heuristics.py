@@ -34,6 +34,12 @@ def check_regex(voice_input, phrase, errors_allowed=4):
 
 
 def enter_heuristics(voice_input_punc, input_data, full_prompt_row):
+    if input_data is None or full_prompt_row is None:
+        if 'press one' in voice_input.lower() or 'press 1' in voice_input.lower():
+            return {"response": "1", "to_say": False}
+        else:
+            return {}
+        
     voice_input_tmp = voice_input_punc.lower().translate(
         str.maketrans('', '', string.punctuation))
     voice_input = re.sub(r'\s+', ' ', voice_input_tmp)
