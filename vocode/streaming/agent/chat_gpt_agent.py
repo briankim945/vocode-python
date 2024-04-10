@@ -189,16 +189,20 @@ class ChatGPTAgent(RespondAgent[ChatGPTAgentConfig]):
         logger_external.info(f"Calling from within async generate_response: {chat_parameters}")
         last_user_input = chat_parameters['messages'][-1]['content']
         logger_external.info(f"Last message before creating token: {last_user_input}")
-        if 'press one' in last_user_input.lower() or 'press 1' in last_user_input.lower():
-            logger_external.info("Yielding DIGITS INSTEAD OF NEW MESSAGE")
-            yield "DTMF DIGITS:1", True
+
+        # Handle heuristics
+        try:
+            heur_res = self.heuristic_func(last_user_input)
+        except:
+            heur_res = {}
+
+        if "to_say" in heur_res and heur_res["to_say"] is False:
+            yield f"DTMF DIGITS:{heur_res["response"]}", True
+        elif "to_say" in heur_res and heur_res["to_say"]:
+            yield heur_res["response"], True
         else:
             stream = await openai.ChatCompletion.acreate(**chat_parameters)
             async for message in collate_response_async(
                 openai_get_tokens(stream), get_functions=True
             ):
-                logger_external.debug(f"message in async for: {message}")
-                # new_message = BaseMessage(text=str("This is an entirely new message that I've been given"))
-                # logger_external.info(f"Now trying to overwrite with message: {new_message}")
                 yield message, True
-                # yield new_message.text, True

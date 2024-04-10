@@ -116,6 +116,11 @@ def enter_heuristics(voice_input_punc, input_data, full_prompt_row):
             elif check_regex(voice_input, "you can say planes information benefits status"):
                 return {"response": "benefits", "to_say": False}
 
+        # Specific testing
+        elif full_prompt_row['phone_number'] == '+19165555555':
+            if 'press one' in voice_input.lower() or 'press 1' in voice_input.lower():
+                return {"response": "1", "to_say": False}
+
         elif full_prompt_row['phone_number'] == '+18882729272':
             # Second transamerica number
             if check_regex(

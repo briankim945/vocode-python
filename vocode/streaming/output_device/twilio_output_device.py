@@ -48,21 +48,13 @@ class TwilioOutputDevice(BaseOutputDevice):
         while self.active:
             message = await self.queue.get()
             message = json.loads(message)
-            # logger.debug(f"V2: From within twilio_output_device process, message: {message}")
-            # logger.debug(f"{'event' in message} and {message['event'] == 'dtmf'}")
-            # logger.debug("Something's rotten in the state of denmark")
             try:
                 if self.twilio_client is not None and self.current_call_id is not None and self.current_conversation_id is not None and "event" in message and message["event"] == "dtmf":
-                    # xml = self.templater.update_twiml_connection_with_digits_to_string(
-                    #     call_id=self.current_conversation_id,
-                    #     base_url=self.base_url,
-                    #     digits="1"
-                    # )
                     self.playing_dtmf = True
                     xml = self.templater.update_twiml_connection_with_digits_to_string(
                         call_id=self.current_conversation_id,
                         base_url=self.base_url,
-                        digits="1"
+                        digits=message["dtmf"]["digit"],
                     )
                     logger.debug(f"XML: {xml}")
                     call = self.twilio_client.get_call(self.current_call_id).update(twiml=xml)
