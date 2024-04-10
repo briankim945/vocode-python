@@ -197,7 +197,7 @@ class ChatGPTAgent(RespondAgent[ChatGPTAgentConfig]):
             heur_res = {}
 
         if "to_say" in heur_res and heur_res["to_say"] is False:
-            yield f"DTMF DIGITS:{heur_res["response"]}", True
+            yield f"DTMF DIGITS:{heur_res['response']}", True
         elif "to_say" in heur_res and heur_res["to_say"]:
             yield heur_res["response"], True
         else:
