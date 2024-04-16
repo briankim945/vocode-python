@@ -195,6 +195,7 @@ class ChatGPTAgent(RespondAgent[ChatGPTAgentConfig]):
             heur_res = self.heuristic_func(last_user_input)
         except:
             heur_res = {}
+        print(f"HEURISTCS RESULT: {heur_res}")
 
         if "to_say" in heur_res and heur_res["to_say"] is False:
             yield f"DTMF DIGITS:{heur_res['response']}", True

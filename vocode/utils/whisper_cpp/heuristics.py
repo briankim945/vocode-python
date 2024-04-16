@@ -1115,6 +1115,10 @@ def enter_heuristics(voice_input_punc, input_data, full_prompt_row):
             elif check_regex(voice_input, "verification of eligibility and our benefits is not a guarantee of payment benefits are held to all policy provisions including preexisting conditions coordination of benefits and other plan limitations", errors_allowed=10):
                 return {"response": "", "to_say": False}
 
+        elif full_prompt_row['phone_numer'] == '+16189613103':
+            if "press one" or "press 1" in voice_input:
+                return {"response": "1", "to_say": False}
+
     return {}
 
 
