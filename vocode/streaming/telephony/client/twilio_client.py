@@ -48,6 +48,7 @@ class TwilioClient(BaseTelephonyClient):
         return self.templater.get_connection_twiml(
             base_url=self.base_url, call_id=conversation_id
         )
+
     def get_call(self, conversation_id: str):
         return self.twilio_client.calls(conversation_id)
 
