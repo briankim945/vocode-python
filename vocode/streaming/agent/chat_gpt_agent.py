@@ -66,6 +66,7 @@ class ChatGPTAgent(RespondAgent[ChatGPTAgentConfig]):
                 self.agent_config.vector_db_config
             )
 
+        logger_external.info(f"input_data: {agent_config.input_data}, full_prompt_row: {agent_config.full_prompt_row}")
         if agent_config.input_data is not None and agent_config.full_prompt_row is not None:
             self.heuristic_func = lambda voice_input_punc: enter_heuristics(voice_input_punc, agent_config.input_data, agent_config.full_prompt_row)
         else:
