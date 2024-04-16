@@ -155,44 +155,6 @@ class StreamingConversation(Generic[OutputDeviceType]):
             if transcription.is_final:
 
 
-                # Identify the result to say based on hueristics
-                voice_input = transcription.message
-                input_data = _ #request.session['input_data']
-                full_prompt_row = _ # request.session['full_prompt_row']
-                heuristic_result = enter_heuristics(
-                    voice_input_punc=voice_input,
-                    input_data=input_data,
-                    full_prompt_row=full_prompt_row
-                )
-                # print("RESPOND: HEURISTIC RESULT:")
-                # print(heuristic_result)
-
-                # print(f"response_to_use: {response_to_use} and say: {say}")
-                if "response" in heuristic_result:
-                    response_to_use = heuristic_result["response"]
-                if "to_say" in heuristic_result:
-                    say = heuristic_result["to_say"]
-                if "remove_from_transcript" in heuristic_result:
-                    remove_from_transcript = heuristic_result["remove_from_transcript"]
-                else:
-                    remove_from_transcript = False
-
-                # if "response" not in heuristic_result or heuristic_result["response"] is None:
-                #     response_to_use, say = utils.generate_ai_response(
-                #         convo, prompt, input_data, riley_version=full_prompt_row['riley_version'])
-                    
-                # Now speak the result
-                # if say and response_to_use is not None and response_to_use != '':
-                #     response_to_use = utils.replace_dashes_with_dots(response_to_use)
-                #     say = Say('', voice=constants.VOICE_TO_USE)
-                #     say.prosody(response_to_use, volume='+6dB', rate="110%")
-                #     response.append(say)
-                #     print(f"response_to_use: {response_to_use}")
-                # elif say == False and response_to_use is not None:
-                if say == False and response_to_use is not None:
-                    response_to_use = response_to_use.replace(' ', '')
-                    response.play(digits=response_to_use)
-                    print(f"response_to_use: {response_to_use}")
 
 
                 # we use getattr here to avoid the dependency cycle between VonageCall and StreamingConversation
