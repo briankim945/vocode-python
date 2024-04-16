@@ -2,8 +2,14 @@ import re
 import string
 import json
 from fuzzysearch import find_near_matches
+import logging
 
 from . import mappings
+
+
+logging.basicConfig()
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
 
 
 def check_regex(voice_input, phrase, errors_allowed=4):
@@ -48,6 +54,7 @@ def enter_heuristics(voice_input_punc, input_data, full_prompt_row):
     heuristic_result = general_heuristics(voice_input, input_data_dict)
     # If we have a verbal/press response, return it
     # If not, continue to the more general heuristics
+    logger.info(f"call_type: {full_prompt_row['call_type']}, phone_number: {full_prompt_row['phone_number']}")
     if "response" in heuristic_result and heuristic_result["response"] is not None:
         return heuristic_result
     if full_prompt_row['call_type'] == 'eligibility':
