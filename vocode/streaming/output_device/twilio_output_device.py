@@ -23,7 +23,7 @@ logger.setLevel(logging.DEBUG)
 
 class TwilioOutputDevice(BaseOutputDevice):
     def __init__(
-        self, ws: Optional[WebSocket] = None, stream_sid: Optional[str] = None, handle_digits: Optional[Callable] = None
+        self, ws: Optional[WebSocket] = None, stream_sid: Optional[str] = None
     ):
         super().__init__(
             sampling_rate=DEFAULT_SAMPLING_RATE, audio_encoding=DEFAULT_AUDIO_ENCODING
@@ -33,7 +33,6 @@ class TwilioOutputDevice(BaseOutputDevice):
         self.active = True
         self.queue: asyncio.Queue[str] = asyncio.Queue()
         self.process_task = asyncio.create_task(self.process())
-        self.handle_digits = handle_digits
         self.current_conversation_id = None
         self.current_call_id = None
         self.base_url = None
