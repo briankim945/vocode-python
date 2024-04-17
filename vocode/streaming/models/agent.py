@@ -1,4 +1,4 @@
-from typing import List, Optional, Union
+from typing import List, Optional, Union, Callable
 from enum import Enum
 from langchain.prompts import PromptTemplate
 
@@ -96,8 +96,7 @@ class ChatGPTAgentConfig(AgentConfig, type=AgentType.CHAT_GPT.value):
     cut_off_response: Optional[CutOffResponse] = None
     azure_params: Optional[AzureOpenAIConfig] = None
     vector_db_config: Optional[VectorDBConfig] = None
-    input_data: Optional[str] = None
-    full_prompt_row: Optional[dict] = None
+    heuristics_func: Optional[Callable[[str, str], dict]]
 
 
 class ChatAnthropicAgentConfig(AgentConfig, type=AgentType.CHAT_ANTHROPIC.value):
