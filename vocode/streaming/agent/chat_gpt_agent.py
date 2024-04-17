@@ -23,7 +23,6 @@ from vocode.streaming.agent.utils import (
 from vocode.streaming.models.events import Sender
 from vocode.streaming.models.transcript import Transcript
 from vocode.streaming.vector_db.factory import VectorDBFactory
-from vocode.utils.whisper_cpp.heuristics import enter_heuristics
 
 logging.basicConfig()
 logger_external = logging.getLogger(__name__)
