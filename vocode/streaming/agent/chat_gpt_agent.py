@@ -13,6 +13,7 @@ from vocode.streaming.action.factory import ActionFactory
 from vocode.streaming.agent.base_agent import RespondAgent
 from vocode.streaming.models.actions import FunctionCall, FunctionFragment
 from vocode.streaming.models.agent import ChatGPTAgentConfig
+from vocode.streaming.models.message import BaseMessage
 from vocode.streaming.agent.utils import (
     format_openai_chat_messages_from_transcript,
     collate_response_async,
@@ -22,7 +23,6 @@ from vocode.streaming.agent.utils import (
 from vocode.streaming.models.events import Sender
 from vocode.streaming.models.transcript import Transcript
 from vocode.streaming.vector_db.factory import VectorDBFactory
-
 
 logging.basicConfig()
 logger_external = logging.getLogger(__name__)
@@ -41,7 +41,6 @@ class ChatGPTAgent(RespondAgent[ChatGPTAgentConfig]):
         super().__init__(
             agent_config=agent_config, action_factory=action_factory, logger=logger
         )
-        logger_external.info("Initializing GPT Agent")
         if agent_config.azure_params:
             openai.api_type = agent_config.azure_params.api_type
             openai.api_base = getenv("AZURE_OPENAI_API_BASE")
@@ -65,6 +64,13 @@ class ChatGPTAgent(RespondAgent[ChatGPTAgentConfig]):
             self.vector_db = vector_db_factory.create_vector_db(
                 self.agent_config.vector_db_config
             )
+
+        if agent_config.heuristics_func is not None:
+            self.heuristic_func = agent_config.heuristics_func
+        else:
+            self.heuristic_func = lambda _: {}
+
+        self.update_dtmf_bool = None
 
     def get_functions(self):
         assert self.agent_config.actions
@@ -126,14 +132,13 @@ class ChatGPTAgent(RespondAgent[ChatGPTAgentConfig]):
             cut_off_response = self.get_cut_off_response()
             return cut_off_response, False
         self.logger.debug("LLM responding to human input")
-        logger_external.debug(f"WE ARE INSIDE THE CHAT GPT AGENT")
         if self.is_first_response and self.first_response:
             self.logger.debug("First response is cached")
             self.is_first_response = False
             text = self.first_response
         else:
             chat_parameters = self.get_chat_parameters()
-            logger_external.debug(f"Calling from within respond: {chat_parameters}")
+            logging.debug(f"Calling from within respond: {chat_parameters}")
             chat_completion = await openai.ChatCompletion.acreate(**chat_parameters)
             text = chat_completion.choices[0].message.content
         self.logger.debug(f"LLM response: {text}")
@@ -180,9 +185,24 @@ class ChatGPTAgent(RespondAgent[ChatGPTAgentConfig]):
         else:
             chat_parameters = self.get_chat_parameters()
         chat_parameters["stream"] = True
-        logger_external.debug(f"Calling from within async generate_response: {chat_parameters}")
-        stream = await openai.ChatCompletion.acreate(**chat_parameters)
-        async for message in collate_response_async(
-            openai_get_tokens(stream), get_functions=True
-        ):
-            yield message, True
+        logger_external.info(f"Calling from within async generate_response: {chat_parameters}")
+        last_user_input = chat_parameters['messages'][-1]['content']
+        logger_external.info(f"Last message before creating token: {last_user_input}")
+
+        # Handle heuristics
+        try:
+            heur_res = self.heuristic_func(last_user_input)
+        except:
+            heur_res = {}
+        logger_external.info(f"HEURISTCS RESULT: {heur_res}")
+
+        if "to_say" in heur_res and heur_res["to_say"] is False:
+            yield f"DTMF DIGITS:{heur_res['response']}", True
+        elif "to_say" in heur_res and heur_res["to_say"]:
+            yield heur_res["response"], True
+        else:
+            stream = await openai.ChatCompletion.acreate(**chat_parameters)
+            async for message in collate_response_async(
+                openai_get_tokens(stream), get_functions=True
+            ):
+                yield message, True

@@ -18,3 +18,15 @@ class Templater:
             self.render_template("connect_call.xml", base_url=base_url, id=call_id),
             media_type="application/xml",
         )
+
+    def update_twiml_connection_with_digits(self, call_id: str, base_url: str, digits: str):
+        return Response(
+            self.render_template("digits_update_call.xml", base_url=base_url, id=call_id, digits=digits),
+            media_type="application/xml",
+        )
+    
+    def update_twiml_connection_with_digits_to_string(self, call_id: str, base_url: str, digits: str):
+        return self.render_template("digits_update_call.xml", base_url=base_url, id=call_id, digits=digits)
+
+    def update_twiml_connection_with_digits_and_redirect_to_string(self, call_id: str, base_url: str, digits: str):
+        return self.render_template("digits_update_redirect.xml", base_url=base_url, id=call_id, digits=digits)

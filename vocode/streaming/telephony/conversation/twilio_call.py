@@ -18,6 +18,9 @@ from vocode.streaming.models.synthesizer import (
 from vocode.streaming.models.transcriber import (
     TranscriberConfig,
 )
+from vocode.streaming.models.telephony import (
+    BaseCallConfig,
+)
 from vocode.streaming.synthesizer.factory import SynthesizerFactory
 from vocode.streaming.telephony.client.twilio_client import TwilioClient
 from vocode.streaming.telephony.config_manager.base_config_manager import (
@@ -51,12 +54,14 @@ class TwilioCall(Call[TwilioOutputDevice]):
         synthesizer_factory: SynthesizerFactory = SynthesizerFactory(),
         events_manager: Optional[EventsManager] = None,
         logger: Optional[logging.Logger] = None,
+        call_config: Optional[BaseCallConfig] = None
     ):
         super().__init__(
             from_phone,
             to_phone,
             base_url,
             config_manager,
+            call_config,
             TwilioOutputDevice(),
             agent_config,
             transcriber_config,
@@ -79,6 +84,8 @@ class TwilioCall(Call[TwilioOutputDevice]):
         )
         self.twilio_sid = twilio_sid
         self.latest_media_timestamp = 0
+
+        self.output_device.twilio_client = self.telephony_client
 
     def create_state_manager(self) -> TwilioCallStateManager:
         return TwilioCallStateManager(self)
@@ -120,7 +127,8 @@ class TwilioCall(Call[TwilioOutputDevice]):
                 response = await self.handle_ws_message(message)
                 if response == PhoneCallWebsocketAction.CLOSE_WEBSOCKET:
                     break
-        await self.config_manager.delete_config(self.id)
+        if not self.output_device.playing_dtmf:
+            await self.config_manager.delete_config(self.id)
         await self.tear_down()
 
     async def wait_for_twilio_start(self, ws: WebSocket):
@@ -135,6 +143,7 @@ class TwilioCall(Call[TwilioOutputDevice]):
                     f"Media WS: Received event '{data['event']}': {message}"
                 )
                 self.output_device.stream_sid = data["start"]["streamSid"]
+                self.output_device.current_call_id = data["start"]["callSid"]
                 break
 
     async def handle_ws_message(self, message) -> Optional[PhoneCallWebsocketAction]:

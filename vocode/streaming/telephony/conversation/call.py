@@ -15,6 +15,9 @@ from vocode.streaming.models.synthesizer import (
 from vocode.streaming.models.transcriber import (
     TranscriberConfig,
 )
+from vocode.streaming.models.telephony import (
+    BaseCallConfig,
+)
 from vocode.streaming.synthesizer.factory import SynthesizerFactory
 from vocode.streaming.telephony.config_manager.base_config_manager import (
     BaseConfigManager,
@@ -38,6 +41,7 @@ class Call(StreamingConversation[TelephonyOutputDeviceType]):
         to_phone: str,
         base_url: str,
         config_manager: BaseConfigManager,
+        call_config: BaseCallConfig,
         output_device: TelephonyOutputDeviceType,
         agent_config: AgentConfig,
         transcriber_config: TranscriberConfig,
@@ -59,6 +63,7 @@ class Call(StreamingConversation[TelephonyOutputDeviceType]):
         self.to_phone = to_phone
         self.base_url = base_url
         self.config_manager = config_manager
+        self.call_config = call_config
         super().__init__(
             output_device,
             transcriber_factory.create_transcriber(transcriber_config, logger=logger),
@@ -68,16 +73,33 @@ class Call(StreamingConversation[TelephonyOutputDeviceType]):
             per_chunk_allowance_seconds=0.01,
             events_manager=events_manager,
             logger=logger,
+            transcript=call_config.transcript
         )
 
     def attach_ws(self, ws: WebSocket):
         self.logger.debug("Trying to attach WS to outbound call")
         self.output_device.ws = ws
+        self.output_device.current_conversation_id = self.id
+        self.output_device.base_url = self.base_url
         self.logger.debug("Attached WS to outbound call")
 
     async def attach_ws_and_start(self, ws: WebSocket):
         raise NotImplementedError
 
     async def tear_down(self):
-        self.events_manager.publish_event(PhoneCallEndedEvent(conversation_id=self.id))
-        await self.terminate()
+        conversation_ended = not self.output_device.playing_dtmf
+
+        self.logger.debug(f"Conversation ended: {conversation_ended}")
+        if conversation_ended:
+            self.events_manager.publish_event(PhoneCallEndedEvent(conversation_id=self.id))
+        else:
+            self.logger.info("Saving call_config")
+            self.logger.info(f"Transcript: {len(self.transcript.event_logs)}")
+            # Save the transcript on the call config before we store it
+            self.call_config.transcript = self.transcript
+            # But clear out the events_manager because it may not be JSON serializable
+            self.call_config.transcript.events_manager = None
+            # Now store it, so we can continue with the same transcript when we get the next websocket connection
+            self.config_manager.save_config(conversation_id=self.id, config=self.call_config)
+
+        await self.terminate(conversation_ended=conversation_ended)

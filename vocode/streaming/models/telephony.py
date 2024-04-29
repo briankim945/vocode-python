@@ -20,6 +20,7 @@ from vocode.streaming.telephony.constants import (
     VONAGE_AUDIO_ENCODING,
     VONAGE_SAMPLING_RATE,
 )
+from vocode.streaming.models.transcript import Transcript
 
 
 class TwilioConfig(BaseModel):
@@ -97,6 +98,7 @@ class BaseCallConfig(TypedModel, type=CallConfigType.BASE.value):
     synthesizer_config: SynthesizerConfig
     from_phone: str
     to_phone: str
+    transcript: Optional[Transcript]
 
     @staticmethod
     def default_transcriber_config():

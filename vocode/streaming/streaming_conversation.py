@@ -8,6 +8,9 @@ from typing import Any, Awaitable, Callable, Generic, Optional, Tuple, TypeVar, 
 import logging
 import time
 import typing
+import re
+
+from twilio.twiml.voice_response import VoiceResponse
 
 from vocode.streaming.action.worker import ActionsWorker
 
@@ -67,6 +70,7 @@ from vocode.streaming.utils.worker import (
     InterruptibleAgentResponseEvent,
     InterruptibleWorker,
 )
+
 
 OutputDeviceType = TypeVar("OutputDeviceType", bound=BaseOutputDevice)
 
@@ -148,6 +152,10 @@ class StreamingConversation(Generic[OutputDeviceType]):
             )
             self.conversation.is_human_speaking = not transcription.is_final
             if transcription.is_final:
+
+
+
+
                 # we use getattr here to avoid the dependency cycle between VonageCall and StreamingConversation
                 event = self.interruptible_event_factory.create_interruptible_event(
                     TranscriptionAgentInput(
@@ -382,6 +390,7 @@ class StreamingConversation(Generic[OutputDeviceType]):
         per_chunk_allowance_seconds: float = PER_CHUNK_ALLOWANCE_SECONDS,
         events_manager: Optional[EventsManager] = None,
         logger: Optional[logging.Logger] = None,
+        transcript: Optional[Transcript] = None,
     ):
         self.id = conversation_id or create_conversation_id()
         self.logger = wrap_logger(
@@ -441,7 +450,8 @@ class StreamingConversation(Generic[OutputDeviceType]):
         self.events_manager = events_manager or EventsManager()
         self.events_task: Optional[asyncio.Task] = None
         self.per_chunk_allowance_seconds = per_chunk_allowance_seconds
-        self.transcript = Transcript()
+        self.transcript = transcript or Transcript()
+        self.logger.info(f"Transcript size: {len(self.transcript.event_logs)}")
         self.transcript.attach_events_manager(self.events_manager)
         self.bot_sentiment = None
         if self.agent.get_agent_config().track_bot_sentiment:
@@ -623,50 +633,72 @@ class StreamingConversation(Generic[OutputDeviceType]):
             self.transcriber.mute()
         message_sent = message
         cut_off = False
-        chunk_size = seconds_per_chunk * get_chunk_size_per_second(
-            self.synthesizer.get_synthesizer_config().audio_encoding,
-            self.synthesizer.get_synthesizer_config().sampling_rate,
-        )
-        chunk_idx = 0
-        seconds_spoken = 0
-        async for chunk_result in synthesis_result.chunk_generator:
-            start_time = time.time()
-            speech_length_seconds = seconds_per_chunk * (
-                len(chunk_result.chunk) / chunk_size
+
+        # HANDLING DTMF TONES
+        regex_validate = re.compile(r'DTMF DIGITS:(\d+)')
+        if regex_validate.fullmatch(message_sent):
+            logger.info(f"Successfully found: {message_sent}")
+            m = regex_validate.match(message_sent)
+            for i, d in enumerate(m.group(1)):
+                logger.info(f"Need to handle digit {d}")
+                if stop_event.is_set():
+                    self.logger.debug(
+                        "Interrupted, stopping text to speech after {} chunks".format(
+                            chunk_idx
+                        )
+                    )
+                    message_sent = f"DTMF DIGITS:{m.group(1)[:i + 1]}-"
+                    cut_off = True
+                    break
+                self.output_device.consume_dtmf_message(str(d), str(i + 1))
+                await asyncio.sleep(1)
+                if transcript_message:
+                    transcript_message.text = f"DTMF DIGITS:{m.group(1)[:i + 1]}"
+        else:
+            chunk_size = seconds_per_chunk * get_chunk_size_per_second(
+                self.synthesizer.get_synthesizer_config().audio_encoding,
+                self.synthesizer.get_synthesizer_config().sampling_rate,
             )
-            seconds_spoken = chunk_idx * seconds_per_chunk
-            if stop_event.is_set():
-                self.logger.debug(
-                    "Interrupted, stopping text to speech after {} chunks".format(
-                        chunk_idx
+            chunk_idx = 0
+            seconds_spoken = 0
+            async for chunk_result in synthesis_result.chunk_generator:
+                start_time = time.time()
+                speech_length_seconds = seconds_per_chunk * (
+                    len(chunk_result.chunk) / chunk_size
+                )
+                seconds_spoken = chunk_idx * seconds_per_chunk
+                if stop_event.is_set():
+                    self.logger.debug(
+                        "Interrupted, stopping text to speech after {} chunks".format(
+                            chunk_idx
+                        )
+                    )
+                    message_sent = f"{synthesis_result.get_message_up_to(seconds_spoken)}-"
+                    cut_off = True
+                    break
+                if chunk_idx == 0:
+                    if started_event:
+                        started_event.set()
+                self.output_device.consume_nonblocking(chunk_result.chunk)
+                end_time = time.time()
+                await asyncio.sleep(
+                    max(
+                        speech_length_seconds
+                        - (end_time - start_time)
+                        - self.per_chunk_allowance_seconds,
+                        0,
                     )
                 )
-                message_sent = f"{synthesis_result.get_message_up_to(seconds_spoken)}-"
-                cut_off = True
-                break
-            if chunk_idx == 0:
-                if started_event:
-                    started_event.set()
-            self.output_device.consume_nonblocking(chunk_result.chunk)
-            end_time = time.time()
-            await asyncio.sleep(
-                max(
-                    speech_length_seconds
-                    - (end_time - start_time)
-                    - self.per_chunk_allowance_seconds,
-                    0,
+                self.logger.debug(
+                    "Sent chunk {} with size {}".format(chunk_idx, len(chunk_result.chunk))
                 )
-            )
-            self.logger.debug(
-                "Sent chunk {} with size {}".format(chunk_idx, len(chunk_result.chunk))
-            )
-            self.mark_last_action_timestamp()
-            chunk_idx += 1
-            seconds_spoken += seconds_per_chunk
-            if transcript_message:
-                transcript_message.text = synthesis_result.get_message_up_to(
-                    seconds_spoken
-                )
+                self.mark_last_action_timestamp()
+                chunk_idx += 1
+                seconds_spoken += seconds_per_chunk
+                if transcript_message:
+                    transcript_message.text = synthesis_result.get_message_up_to(
+                        seconds_spoken
+                    )
         if self.transcriber.get_transcriber_config().mute_during_speech:
             self.logger.debug("Unmuting transcriber")
             self.transcriber.unmute()
@@ -677,12 +709,13 @@ class StreamingConversation(Generic[OutputDeviceType]):
     def mark_terminated(self):
         self.active = False
 
-    async def terminate(self):
+    async def terminate(self, conversation_ended=True):
         self.mark_terminated()
         self.broadcast_interrupt()
-        self.events_manager.publish_event(
-            TranscriptCompleteEvent(conversation_id=self.id, transcript=self.transcript)
-        )
+        if conversation_ended:
+            self.events_manager.publish_event(
+                TranscriptCompleteEvent(conversation_id=self.id, transcript=self.transcript)
+            )
         if self.check_for_idle_task:
             self.logger.debug("Terminating check_for_idle Task")
             self.check_for_idle_task.cancel()

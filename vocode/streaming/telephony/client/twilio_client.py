@@ -49,6 +49,9 @@ class TwilioClient(BaseTelephonyClient):
             base_url=self.base_url, call_id=conversation_id
         )
 
+    def get_call(self, conversation_id: str):
+        return self.twilio_client.calls(conversation_id)
+
     async def end_call(self, twilio_sid):
         # TODO: Make this async. This is blocking.
         response = self.twilio_client.calls(twilio_sid).update(status="completed")
